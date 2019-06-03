@@ -1,5 +1,5 @@
 #-*- coding: ISO-8859-1 -*-
-# pysqlcipherx/dbapi2.py: the DB-API 2.0 interface
+# sqlcipher3/dbapi2.py: the DB-API 2.0 interface
 #
 # Copyright (C) 2004-2005 Gerhard Häring <gh@ghaering.de>
 #
@@ -25,7 +25,7 @@ import datetime
 import time
 import collections.abc
 
-from pysqlcipherx._sqlite3 import *
+from sqlcipher3._sqlite3 import *
 
 paramstyle = "qmark"
 

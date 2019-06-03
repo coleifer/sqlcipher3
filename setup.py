@@ -11,7 +11,7 @@ from setuptools import Extension
 
 # If you need to change anything, it should be enough to change setup.cfg.
 
-PACKAGE_NAME = 'pysqlcipherx'
+PACKAGE_NAME = 'sqlcipher3'
 VERSION = '0.1.0'
 
 # define sqlite sources
@@ -54,7 +54,7 @@ class AmalgationLibSqliteBuilder(build_ext):
 
     amalgamation_message = ('Sqlcipher amalgamation not found. Please download'
                             ' or build the amalgamation and make sure the '
-                            'following files are present in the pysqlcipherx '
+                            'following files are present in the sqlcipher3 '
                             'folder: sqlite3.h, sqlite3.c')
 
     def check_amalgamation(self):
@@ -142,7 +142,7 @@ def get_setup_args():
         author_email="coleifer@gmail.com",
         license="zlib/libpng",
         platforms="ALL",
-        url="https://github.com/coleifer/pysqlcipherx",
+        url="https://github.com/coleifer/sqlcipher3",
         package_dir={PACKAGE_NAME: "lib"},
         packages=packages,
         ext_modules=[Extension(

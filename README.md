@@ -1,5 +1,5 @@
-pysqlcipherX
-============
+sqlcipher3
+==========
 
 This library takes [pysqlite3](https://github.com/coleifer/pysqlite3) and makes
 some small modifications so it is suitable for use with
@@ -14,7 +14,7 @@ Additional features:
 Building with System SQLCipher
 ------------------------------
 
-To build `pysqlcipherx` linked against the system SQLCipher, run:
+To build `sqlcipher3` linked against the system SQLCipher, run:
 
 ```
 $ python setup.py build
@@ -23,7 +23,7 @@ $ python setup.py build
 Building a statically-linked library
 ------------------------------------
 
-To build `pysqlcipherx` statically-linked against a particular version of
+To build `sqlcipher3` statically-linked against a particular version of
 SQLCipher, you need to obtain the SQLCipher source code and copy `sqlite3.c`
 and `sqlite3.h` into the source tree.
 
@@ -35,13 +35,13 @@ $ cd sqlcipher/
 $ ./configure
 $ make sqlite3.c
 
-# Copy the sqlcipher amalgamation files into the root of the pysqlcipherx
+# Copy the sqlcipher amalgamation files into the root of the sqlcipher3
 # checkout and run build_static + build:
-$ cp sqlcipher/sqlite3.[ch] pysqlcipherx/
-$ cd pysqlcipherx
+$ cp sqlcipher/sqlite3.[ch] sqlcipher3/
+$ cd sqlcipher3
 $ python setup.py build_static build
 ```
 
-You now have a statically-linked, completely self-contained `pysqlcipherx`.
+You now have a statically-linked, completely self-contained `sqlcipher3`.
 
 <small>Original code (c) Gerhard Häring</small>
