@@ -23,7 +23,7 @@
 
 import datetime
 import unittest
-from pysqlite3 import dbapi2 as sqlite
+from sqlcipher3 import dbapi2 as sqlite
 import weakref
 #from test import support
 

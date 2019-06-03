@@ -22,7 +22,7 @@
 # 3. This notice may not be removed or altered from any source distribution.
 
 import os, unittest
-from pysqlite3 import dbapi2 as sqlite
+from sqlcipher3 import dbapi2 as sqlite
 
 def get_db_path():
     return "sqlite_testdb"
