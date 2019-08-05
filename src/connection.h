@@ -31,7 +31,11 @@
 #include "cache.h"
 #include "module.h"
 
-#include "sqlcipher/sqlite3.h"
+#ifdef PYSQLITE_AMALGATION_BUILD
+    #include "sqlite3.h"
+#else
+    #include "sqlcipher/sqlite3.h"
+#endif
 
 typedef struct
 {

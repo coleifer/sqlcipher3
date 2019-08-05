@@ -26,7 +26,11 @@
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
 #include "pythread.h"
-#include "sqlcipher/sqlite3.h"
+#ifdef PYSQLITE_AMALGATION_BUILD
+    #include "sqlite3.h"
+#else
+    #include "sqlcipher/sqlite3.h"
+#endif
 #include "connection.h"
 
 int pysqlite_step(sqlite3_stmt* statement, pysqlite_Connection* connection);

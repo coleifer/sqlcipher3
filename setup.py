@@ -72,6 +72,8 @@ class AmalgationLibSqliteBuilder(build_ext):
         # it is responsibility of user to provide amalgamation
         self.check_amalgamation()
 
+        ext.define_macros.append(("PYSQLITE_AMALGATION_BUILD", None))
+
         # Feature-ful library.
         features = (
             'ENABLE_FTS3',

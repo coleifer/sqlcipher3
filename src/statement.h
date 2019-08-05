@@ -27,7 +27,11 @@
 #include "Python.h"
 
 #include "connection.h"
-#include "sqlcipher/sqlite3.h"
+#ifdef PYSQLITE_AMALGATION_BUILD
+    #include "sqlite3.h"
+#else
+    #include "sqlcipher/sqlite3.h"
+#endif
 
 #define PYSQLITE_TOO_MUCH_SQL (-100)
 #define PYSQLITE_SQL_WRONG_TYPE (-101)
