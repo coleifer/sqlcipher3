@@ -103,7 +103,7 @@ class AmalgationLibSqliteBuilder(build_ext):
 
         if sys.platform != "win32":
             # Include math library, required for fts5, and crypto.
-            ext.extra_link_args.append("-lm -lcrypto")
+            ext.extra_link_args.extend(["-lm", "-lcrypto"])
         else:
             # Try to locate openssl.
             openssl_conf = os.environ.get('OPENSSL_CONF')
