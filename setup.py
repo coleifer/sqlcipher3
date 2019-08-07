@@ -3,6 +3,7 @@
 #
 import os
 import setuptools
+import shutil
 import sys
 
 from distutils import log
@@ -52,19 +53,24 @@ class AmalgationLibSqliteBuilder(build_ext):
     amalgamation_header = os.path.join(amalgamation_root, 'sqlite3.h')
     amalgamation_source = os.path.join(amalgamation_root, 'sqlite3.c')
 
+    header_dir = os.path.join(amalgamation_root, 'sqlcipher')
+    header_file = os.path.join(header_dir, 'sqlite3.h')
+
     amalgamation_message = ('Sqlcipher amalgamation not found. Please download'
                             ' or build the amalgamation and make sure the '
                             'following files are present in the sqlcipher3 '
                             'folder: sqlite3.h, sqlite3.c')
 
     def check_amalgamation(self):
-        if not os.path.exists(self.amalgamation_root):
-            os.mkdir(self.amalgamation_root)
-
         header_exists = os.path.exists(self.amalgamation_header)
         source_exists = os.path.exists(self.amalgamation_source)
         if not header_exists or not source_exists:
             raise RuntimeError(self.amalgamation_message)
+
+        if not os.path.exists(self.header_dir):
+            os.mkdir(self.header_dir)
+        if not os.path.exists(self.header_file):
+            shutil.copy(self.amalgamation_header, self.header_file)
 
     def build_extension(self, ext):
         log.info(self.description)
