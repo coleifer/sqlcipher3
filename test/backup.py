@@ -136,8 +136,8 @@ class BackupTests(unittest.TestCase):
     def test_database_source_name(self):
         with sqlite.connect(':memory:') as bck:
             self.cx.backup(bck, name='main')
-        with sqlite.connect(':memory:') as bck:
-            self.cx.backup(bck, name='temp')
+        #with sqlite.connect(':memory:') as bck:
+        #    self.cx.backup(bck, name='temp')
         with self.assertRaises(sqlite.OperationalError) as cm:
             with sqlite.connect(':memory:') as bck:
                 self.cx.backup(bck, name='non-existing')
