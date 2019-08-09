@@ -23,10 +23,10 @@
 
 import threading
 import unittest
-from pysqlite3 import dbapi2 as sqlite
+from sqlcipher3 import dbapi2 as sqlite
 
 #from test.support import TESTFN, unlink
-TESTFN = '/tmp/pysqlite3_test'
+TESTFN = '/tmp/sqlcipher3_test'
 from os import unlink
 
 
