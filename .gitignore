@@ -2,3 +2,4 @@ sqlcipher/sqlite3.h
 build/*
 dist/*
 sqlcipher3.egg-info/*
+_sqlite*.so
