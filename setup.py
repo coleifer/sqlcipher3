@@ -43,6 +43,7 @@ class SystemLibSqliteBuilder(build_ext):
 
     def build_extension(self, ext):
         log.info(self.description)
+        ext.libraries.append('sqlcipher')
         build_ext.build_extension(self, ext)
 
 
@@ -149,7 +150,7 @@ def get_setup_args():
         license="zlib/libpng",
         platforms="ALL",
         url="https://github.com/coleifer/sqlcipher3",
-        package_dir={PACKAGE_NAME: "lib"},
+        package_dir={PACKAGE_NAME: "sqlcipher3"},
         packages=packages,
         ext_modules=[Extension(
             name=PACKAGE_NAME + EXTENSION_MODULE_NAME,
