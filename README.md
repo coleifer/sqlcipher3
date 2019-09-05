@@ -7,9 +7,17 @@ some small modifications so it is suitable for use with
 
 Additional features:
 
-* Support for user-defined window functions (requires SQLite >= 3.25)
-* Support specifying flags when opening connection
-* Support specifying VFS when opening connection
+* User-defined window functions (requires SQLite >= 3.25)
+* Flags and VFS an be specified when opening connection
+* Incremental BLOB I/O, [bpo-24905](https://github.com/python/cpython/pull/271)
+* Improved error messages, [bpo-16379](https://github.com/python/cpython/pull/1108)
+* Simplified detection of DML statements via `sqlite3_stmt_readonly`.
+* Sqlite native backup API (also present in standard library 3.7 and newer).
+
+A completely self-contained binary package (wheel) is available for versions
+0.4.0 and newer as `sqlcipher3-binary`. This package contains the latest
+release of sqlcipher compiled with numerous extensions, and requires no
+external dependencies.
 
 Building with System SQLCipher
 ------------------------------
@@ -44,4 +52,14 @@ $ python setup.py build_static build
 
 You now have a statically-linked, completely self-contained `sqlcipher3`.
 
-<small>Original code (c) Gerhard Häring</small>
+Using the binary package
+------------------------
+
+A binary package (wheel) is available for linux with a completely
+self-contained  `sqlcipher3`, statically-linked against the most recent release
+of sqlcipher.
+
+```
+$ pip install sqlcipher3-binary
+```
+
