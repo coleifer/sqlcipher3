@@ -13,7 +13,7 @@ from setuptools import Extension
 # If you need to change anything, it should be enough to change setup.cfg.
 
 PACKAGE_NAME = 'sqlcipher3'
-VERSION = '0.4.1'
+VERSION = '0.4.2'
 
 # define sqlite sources
 sources = [os.path.join('src', source)
