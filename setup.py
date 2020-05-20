@@ -100,6 +100,9 @@ class AmalgationLibSqliteBuilder(build_ext):
         # Required for SQLCipher.
         ext.define_macros.append(("SQLITE_TEMP_STORE", "2"))
 
+        # Increase the maximum number of "host parameters".
+        ext.define_macros.append(("SQLITE_MAX_VARIABLE_NUMBER", "250000"))
+
         # Additional nice-to-have.
         ext.define_macros.extend((
             ('SQLITE_DEFAULT_PAGE_SIZE', '4096'),
