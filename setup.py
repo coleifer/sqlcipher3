@@ -32,8 +32,8 @@ if sys.platform == "darwin":
 
 
 def quote_argument(arg):
-    quote = '"' if sys.platform != 'win32' else '\\"'
-    return quote + arg + quote
+    q = '\\"' if sys.platform == 'win32' and sys.version_info < (3, 9) else '"'
+    return q + arg + q
 
 define_macros = [('MODULE_NAME', quote_argument(PACKAGE_NAME + '.dbapi2'))]
 
@@ -129,7 +129,8 @@ class AmalgationLibSqliteBuilder(build_ext):
             ext.define_macros.append(("inline", "__inline"))
 
             # Configure the linker
-            ext.extra_link_args.append("libeay32.lib")
+            openssl_libname = os.environ.get('OPENSSL_LIBNAME') or 'libeay32.lib'
+            ext.extra_link_args.append(openssl_libname)
             ext.extra_link_args.append('/LIBPATH:' + openssl_lib_path)
 
         build_ext.build_extension(self, ext)
