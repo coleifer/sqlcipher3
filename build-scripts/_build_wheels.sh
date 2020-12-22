@@ -52,6 +52,9 @@ PY37="/opt/python/cp37-cp37m/bin"
 PY38="/opt/python/cp38-cp38/bin"
 "${PY38}/python" setup.py build_static
 
+PY39="/opt/python/cp39-cp39/bin"
+"${PY39}/python" setup.py build_static
+
 # Replace the package name defined in setup.py so we can push this to PyPI
 # without stomping on the source dist.
 sed -i "s|name=PACKAGE_NAME,|name='sqlcipher3-binary',|g" setup.py
@@ -59,6 +62,7 @@ sed -i "s|name=PACKAGE_NAME,|name='sqlcipher3-binary',|g" setup.py
 "${PY36}/pip" wheel /io/sqlcipher3 -w /io/wheelhouse
 "${PY37}/pip" wheel /io/sqlcipher3 -w /io/wheelhouse
 "${PY38}/pip" wheel /io/sqlcipher3 -w /io/wheelhouse
+"${PY39}/pip" wheel /io/sqlcipher3 -w /io/wheelhouse
 
 for whl in /io/wheelhouse/*.whl; do
   auditwheel repair "$whl" -w /io/wheelhouse/
