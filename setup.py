@@ -117,19 +117,36 @@ class AmalgationLibSqliteBuilder(build_ext):
         else:
             # Try to locate openssl.
             openssl_conf = os.environ.get('OPENSSL_CONF')
-            if not openssl_conf:
-                error_message = 'Fatal error: OpenSSL could not be detected!'
+            if openssl_conf:
+                openssl_dir = os.path.dirname(os.path.dirname(openssl_conf))
+            else:
+                openssl_dir = r'C:\Program Files\OpenSSL-Win64'
+                print(f'Setting OpenSSL directory to default: {openssl_dir}')
+
+            if not os.path.isdir(openssl_dir):
+                error_message = 'Fatal error: OpenSSL directory could not be detected!'
                 raise RuntimeError(error_message)
 
-            openssl = os.path.dirname(os.path.dirname(openssl_conf))
-            openssl_lib_path = os.path.join(openssl, "lib")
+            openssl_lib_path = os.path.join(openssl_dir, "lib")
 
             # Configure the compiler
-            ext.include_dirs.append(os.path.join(openssl, "include"))
+            ext.include_dirs.append(os.path.join(openssl_dir, "include"))
             ext.define_macros.append(("inline", "__inline"))
 
             # Configure the linker
-            openssl_libname = os.environ.get('OPENSSL_LIBNAME') or 'libeay32.lib'
+            # different openssl lib names: https://github.com/arvidn/libtorrent/issues/1931
+            openssl_1_1_0 = 'libeay32.lib'
+            openssl_1_1_1 = 'libcrypto.lib'
+            if os.path.isfile(os.path.join(openssl_lib_path, openssl_1_1_0)):
+                # openssl 1.1.0 or lower
+                openssl_libname = 'libeay32.lib'
+            elif os.path.isfile(os.path.join(openssl_lib_path, openssl_1_1_1)):
+                # openssl 1.1.1 or higher
+                openssl_libname = 'libcrypto.lib'
+            else:
+                error_message = 'Fatal error: OpenSSL lib could not be detected!'
+                raise RuntimeError(error_message)
+
             ext.extra_link_args.append(openssl_libname)
             ext.extra_link_args.append('/LIBPATH:' + openssl_lib_path)
 
