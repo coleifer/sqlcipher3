@@ -1,0 +1,66 @@
+name: Build
+on: [push]
+jobs:
+  build-win-64bit:
+    name: ${{ matrix.python-version }}
+    runs-on: windows-2019
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.7, 3.8, 3.9]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: 'x64'
+
+      - name: Install OpenSSL and python wheel
+        run: |
+          choco install openssl --version 1.1.1.1100 --no-progress -y
+
+          # build .whl file deps
+          pip install wheel
+
+      - name: Setup nmake
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64
+
+      - name: Download sqlcipher
+        shell: pwsh
+        run: |
+          $ProgressPreference = 'SilentlyContinue' # do not slow down Invoke-WebRequest
+          Write-Output "Downloading SQLCipher zip"
+          Invoke-WebRequest -Uri "https://github.com/sqlcipher/sqlcipher/archive/refs/tags/v4.4.3.zip" -OutFile "sqlcipher.zip"
+
+          Write-Output "Extracting SQLCipher source code"
+          Expand-Archive -Force -Path sqlcipher.zip -DestinationPath ./
+          Remove-Item sqlcipher.zip
+
+      - name: Build sqlcipher amalgamation
+        run: |
+          mkdir sqlcipher-build
+          cd sqlcipher-build
+
+          nmake /f ..\sqlcipher-4.4.3\Makefile.msc sqlite3.c CFLAGS="-DSQLITE_HAS_CODEC" TOP=..\sqlcipher-4.4.3
+          cd ..
+
+          # copy sqlcipher amalgamation files into root directory
+          cp ./sqlcipher-build/sqlite3.[ch] .
+
+      - name: Build python wheels
+        run: |
+          # build pyd
+          python setup.py build_static
+
+          # build whl
+          python setup.py bdist_wheel
+
+      - name: Upload Python wheel artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: sqlcipher3-whl
+          path: ./dist/
+
+# installing result .whl: pip install sqlcipher3-0.4.5-cp39-cp39-win_amd64.whl
