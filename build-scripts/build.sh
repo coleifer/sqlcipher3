@@ -22,6 +22,6 @@ cp "sqlcipher/sqlite3.c" sqlcipher3/
 cp "sqlcipher/sqlite3.h" sqlcipher3/
 
 # Create the wheels and strip symbols to produce manylinux wheels.
-docker run -it -v $(pwd):/io quay.io/pypa/manylinux1_x86_64 /io/_build_wheels.sh
+docker run -it -v $(pwd):/io quay.io/pypa/manylinux_2_24_x86_64 /io/_build_wheels.sh
 
 sudo rm ./wheelhouse/*-linux_*
