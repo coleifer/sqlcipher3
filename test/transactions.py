@@ -1,7 +1,7 @@
 #-*- coding: iso-8859-1 -*-
 # pysqlite2/test/transactions.py: tests transactions
 #
-# Copyright (C) 2005-2007 Gerhard Häring <gh@ghaering.de>
+# Copyright (C) 2005-2007 Gerhard HÃ¤ring <gh@ghaering.de>
 #
 # This file is part of pysqlite.
 #
@@ -276,7 +276,7 @@ class DMLStatementDetectionTestCase(unittest.TestCase):
         conn.execute('vacuum')
         self.assertFalse(conn.in_transaction)
 
-    def test_dml_detection_vacuum(self):
+    def test_dml_detection_pragma(self):
         conn = sqlite.connect(get_db_path())
         conn.execute('pragma journal_mode=\'wal\'')
         jmode, = conn.execute('pragma journal_mode').fetchone()
