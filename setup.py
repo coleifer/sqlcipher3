@@ -44,6 +44,7 @@ class SystemLibSqliteBuilder(build_ext):
     def build_extension(self, ext):
         log.info(self.description)
         ext.libraries.append('sqlcipher')
+        ext.define_macros.append(('SQLITE_HAS_CODEC', '1'))
         build_ext.build_extension(self, ext)
 
 
