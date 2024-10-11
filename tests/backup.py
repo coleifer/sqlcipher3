@@ -95,6 +95,20 @@ class BackupTests(unittest.TestCase):
         self.assertEqual(len(journal), 1)
         self.assertEqual(journal[0], 0)
 
+    def test_sleep(self):
+        with self.assertRaises(ValueError) as bm:
+            with sqlite.connect(':memory:') as bck:
+                self.cx.backup(bck, sleep=-1)
+        self.assertEqual(str(bm.exception), 'sleep must be greater-than or equal to zero')
+
+        with self.assertRaises(TypeError):
+            with sqlite.connect(':memory:') as bck:
+                self.cx.backup(bck, sleep=None)
+
+        with sqlite.connect(':memory:') as bck:
+            self.cx.backup(bck, sleep=10)
+            self.verify_backup(bck)
+
     def test_non_callable_progress(self):
         with self.assertRaises(TypeError) as cm:
             with sqlite.connect(':memory:') as bck:
@@ -156,7 +170,14 @@ class BackupTests(unittest.TestCase):
 
 
 def suite():
-    return unittest.makeSuite(BackupTests)
+    loader = unittest.TestLoader()
+    tests = [loader.loadTestsFromTestCase(t) for t in (
+        BackupTests,)]
+    return unittest.TestSuite(tests)
+
+def test():
+    runner = unittest.TextTestRunner()
+    runner.run(suite())
 
 if __name__ == "__main__":
-    unittest.main()
+    test()
