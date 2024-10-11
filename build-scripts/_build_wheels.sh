@@ -64,6 +64,9 @@ PY311="/opt/python/cp311-cp311/bin"
 PY312="/opt/python/cp312-cp312/bin"
 "${PY312}/python" setup.py build_static
 
+PY313="/opt/python/cp313-cp313/bin"
+"${PY313}/python" setup.py build_static
+
 # Replace the package name defined in setup.py so we can push this to PyPI
 # without stomping on the source dist.
 sed -i "s|name=PACKAGE_NAME,|name='sqlcipher3-binary',|g" setup.py
@@ -75,6 +78,7 @@ sed -i "s|name=PACKAGE_NAME,|name='sqlcipher3-binary',|g" setup.py
 "${PY310}/pip" wheel /io/sqlcipher3 -w /io/wheelhouse
 "${PY311}/pip" wheel /io/sqlcipher3 -w /io/wheelhouse
 "${PY312}/pip" wheel /io/sqlcipher3 -w /io/wheelhouse
+"${PY313}/pip" wheel /io/sqlcipher3 -w /io/wheelhouse
 
 for whl in /io/wheelhouse/*.whl; do
   auditwheel repair "$whl" -w /io/wheelhouse/
