@@ -1020,7 +1020,7 @@ class ClosedCurTests(unittest.TestCase):
 class SqliteColumnTypeTests(unittest.TestCase):
     def setUp(self):
         self.cx = sqlite.connect(':memory:')
-        self.cx.execute('create table test(a text, b datetime)')
+        self.cx.execute('create table test(a TEXT, b datetime)')
         self.cx.execute('create view test_view as select * from test')
 
     def test_DeclTypes(self):
