@@ -5,12 +5,14 @@ import os
 import setuptools
 import shutil
 import sys
+import subprocess
 
 from distutils import log
 from distutils.command.build_ext import build_ext
 from setuptools import Extension
 
 # If you need to change anything, it should be enough to change setup.cfg.
+
 
 PACKAGE_NAME = 'sqlcipher3'
 VERSION = '0.5.4'
@@ -29,6 +31,34 @@ EXTENSION_MODULE_NAME = "._sqlite3"
 if sys.platform == "darwin":
     os.environ['CFLAGS'] = "-Qunused-arguments"
     log.info("CFLAGS: " + os.environ['CFLAGS'])
+
+
+def find_openssl_prefix() -> str:
+    """
+    Tries to detect OpenSSL installation path (Homebrew or system default).
+    """
+    brew_candidates = ["openssl@3", "openssl@1.1"]
+    for formula in brew_candidates:
+        try:
+            prefix = subprocess.check_output(
+                ["brew", "--prefix", formula],
+                stderr=subprocess.DEVNULL,
+                universal_newlines=True
+            ).strip()
+            if os.path.exists(os.path.join(prefix, "include", "openssl", "crypto.h")):
+                return prefix
+        except Exception:
+            continue
+
+    # Fallback to common system paths
+    common_paths = ["/usr/local", "/opt/homebrew", "/usr"]
+    for path in common_paths:
+        if os.path.exists(os.path.join(path, "include", "openssl", "crypto.h")):
+            return path
+
+    raise RuntimeError(
+        "OpenSSL headers not found. Please install OpenSSL (e.g., `brew install openssl@3`)."
+    )
 
 
 def quote_argument(arg):
@@ -105,16 +135,25 @@ class AmalgationLibSqliteBuilder(build_ext):
         ext.define_macros.append(("SQLITE_MAX_VARIABLE_NUMBER", "250000"))
 
         # Additional nice-to-have.
-        ext.define_macros.extend((
+        ext.define_macros.extend([
             ('SQLITE_DEFAULT_PAGE_SIZE', '4096'),
-            ('SQLITE_DEFAULT_CACHE_SIZE', '-8000')))  # 8MB.
+            ('SQLITE_DEFAULT_CACHE_SIZE', '-8000'),
+            ("SQLITE_EXTRA_INIT", "sqlcipher_extra_init"),
+            ("SQLITE_EXTRA_SHUTDOWN", "sqlcipher_extra_shutdown"),
+        ])  # 8MB.
 
         ext.include_dirs.append(self.amalgamation_root)
         ext.sources.append(os.path.join(self.amalgamation_root, "sqlite3.c"))
 
         if sys.platform != "win32":
             # Include math library, required for fts5, and crypto.
-            ext.extra_link_args.extend(["-lm", "-lcrypto"])
+            openssl_prefix = find_openssl_prefix()
+            ext.include_dirs.append(os.path.join(openssl_prefix, "include"))
+            ext.extra_link_args.extend([
+                "-L" + os.path.join(openssl_prefix, "lib"),
+                "-lcrypto",
+                "-lm"
+            ])
         else:
             # Try to locate openssl.
             openssl_conf = os.environ.get('OPENSSL_CONF')
@@ -173,9 +212,10 @@ def get_setup_args():
             "Programming Language :: Python",
             "Topic :: Database :: Database Engines/Servers",
             "Topic :: Software Development :: Libraries :: Python Modules"],
-        cmdclass={
+        cmdclass = {
             "build_static": AmalgationLibSqliteBuilder,
-            "build_ext": SystemLibSqliteBuilder
+            "build_ext": AmalgationLibSqliteBuilder,  # default for pip install / build
+            "build_ext_system": SystemLibSqliteBuilder,  # optional manual command
         }
     )
 
