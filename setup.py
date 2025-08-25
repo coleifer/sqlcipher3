@@ -27,8 +27,10 @@ EXTENSION_MODULE_NAME = "._sqlite3"
 
 # Work around clang raising hard error for unused arguments
 if sys.platform == "darwin":
-    os.environ['CFLAGS'] = "-Qunused-arguments"
+    os.environ['CFLAGS'] = os.environ.get('CFLAGS', '') + " -Qunused-arguments -I/opt/homebrew/include"
+    os.environ['LDFLAGS'] = os.environ.get('LDFLAGS', '') + " -L/opt/homebrew/lib"
     log.info("CFLAGS: " + os.environ['CFLAGS'])
+    log.info("LDFLAGS: " + os.environ['LDFLAGS'])
 
 
 def quote_argument(arg):
