@@ -4,8 +4,9 @@ set -e -x
 
 # Fetch the source code for SQLCipher.
 if [[ ! -d "sqlcipher" ]]; then
-  git clone --depth=1 git@github.com:sqlcipher/sqlcipher
+  git clone git@github.com:sqlcipher/sqlcipher
   cd sqlcipher/
+  git checkout v4.6.0
   ./configure --disable-tcl --enable-tempstore=yes LDFLAGS="-lcrypto -lm"
   make sqlite3.c
   cd ../
