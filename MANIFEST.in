@@ -4,5 +4,7 @@ include LICENSE
 include setup.py
 include src/*.h
 include src/*.c
+include vendor/*.h
+include vendor/*.c
 
 global-exclude *~ *.pyc
