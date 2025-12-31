@@ -19,38 +19,24 @@ A completely self-contained binary package (wheel) is available for versions
 release of sqlcipher compiled with numerous extensions, and requires no
 external dependencies.
 
-Building with System SQLCipher
-------------------------------
+Building SQLCipher
+------------------
 
-To build `sqlcipher3` linked against the system SQLCipher, run:
+To build `sqlcipher3` with SQLCipher embedded using the vendored sources:
 
 ```
 $ python setup.py build
 ```
 
-Building a statically-linked library
-------------------------------------
+Building with System SQLCipher
+------------------------------
 
-To build `sqlcipher3` statically-linked against a particular version of
-SQLCipher, you need to obtain the SQLCipher source code and copy `sqlite3.c`
-and `sqlite3.h` into the source tree.
+To build `sqlcipher3` using a system-installed `libsqlcipher` (versions of
+SQLCipher prior to 4.7.x):
 
 ```
-# Download the latest version of SQLCipher source code and build the source
-# amalgamation files (sqlite3.c and sqlite3.h).
-$ git clone https://github.com/sqlcipher/sqlcipher
-$ cd sqlcipher/
-$ ./configure
-$ make sqlite3.c
-
-# Copy the sqlcipher amalgamation files into the root of the sqlcipher3
-# checkout and run build_static + build:
-$ cp sqlcipher/sqlite3.[ch] sqlcipher3/
-$ cd sqlcipher3
-$ python setup.py build_static build
+$ python setup.py build_system
 ```
-
-You now have a statically-linked, completely self-contained `sqlcipher3`.
 
 Using the binary package
 ------------------------
