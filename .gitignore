@@ -1,5 +1,49 @@
-sqlcipher/sqlite3.h
-build/*
-dist/*
-sqlcipher3.egg-info/*
-_sqlite*.so
+# Build artifacts
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Compiled files
+*.pyc
+__pycache__/
+*.so
+*.pyd
+*.obj
+*.lib
+*.exp
+*.pdb
+
+# Test artifacts
+*.db
+*.db-journal
+test_*.db
+
+# Logs
+*.log
+build_output.txt
+diag_output.txt
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+temp/
+
+# Local test scripts
+test_*.py
+final_integration_test.py
+run_all_tests.sh
+run_openssl3_tests.py
+
+# Local directories
+sqlcipher/
+amalgamation/
