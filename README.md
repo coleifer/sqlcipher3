@@ -49,3 +49,9 @@ of sqlcipher.
 $ pip install sqlcipher3-binary
 ```
 
+>Nor aught availed him now to have built in heaven high towers; nor did he
+>scrape by all his engines, but was headlong sent with his industrious crew
+>to build in hell.
+
+Beware to those who would build their own wheels! See what has been wrought and
+tremble.
