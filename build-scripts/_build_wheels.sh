@@ -6,7 +6,30 @@
 #
 # The code for installing Perl and OpenSSL is derived from the psycopg2-binary
 # build scripts.
-yum install -y zlib-devel openssl-devel
+yum install -y zlib-devel perl-devel
+
+# System OpenSSL is too old (1.1.x) - build 3.5.4.
+OPENSSL_VERSION="3.5.4"
+OPENSSL_TAG="openssl-${OPENSSL_VERSION}"
+
+cd /io
+
+if [ ! -d "openssl-${OPENSSL_VERSION}/" ]; then
+  curl -L https://install.perlbrew.pl | bash
+  source ~/perl5/perlbrew/etc/bashrc
+  perlbrew install --notest perl-5.16.0
+  perlbrew switch perl-5.16.0
+
+  cat /root/perl5/perlbrew/build.perl-*.log
+  sleep 10
+
+  curl -fsSL https://github.com/openssl/openssl/archive//${OPENSSL_TAG}.tar.gz \
+    | tar xzf -
+
+  cd "openssl-${OPENSSL_TAG}"
+  ./config --prefix=/usr/local/ --openssldir=/usr/local/ zlib -fPIC shared
+  make depend && make && make install
+fi
 
 # Volume (cwd of build script) is mounted at /io.
 # A checkout of sqlcipher3 is cloned beforehand by the build.sh script.
@@ -17,38 +40,38 @@ sed -i "s|name='sqlcipher3-binary'|name=PACKAGE_NAME|g" setup.py
 export CFLAGS="-I/usr/local/include -L/usr/local/lib"
 
 #PY36="/opt/python/cp36-cp36m/bin"
-#"${PY36}/python" setup.py build_static
+#"${PY36}/python" setup.py build
 #
 #PY37="/opt/python/cp37-cp37m/bin"
-#"${PY37}/python" setup.py build_static
+#"${PY37}/python" setup.py build
 
 PY38="/opt/python/cp38-cp38/bin"
 "${PY38}/pip" install setuptools
-"${PY38}/python" setup.py build_static
+"${PY38}/python" setup.py build
 
 PY39="/opt/python/cp39-cp39/bin"
 "${PY39}/pip" install setuptools
-"${PY39}/python" setup.py build_static
+"${PY39}/python" setup.py build
 
 PY310="/opt/python/cp310-cp310/bin"
 "${PY310}/pip" install setuptools
-"${PY310}/python" setup.py build_static
+"${PY310}/python" setup.py build
 
 PY311="/opt/python/cp311-cp311/bin"
 "${PY311}/pip" install setuptools
-"${PY311}/python" setup.py build_static
+"${PY311}/python" setup.py build
 
 PY312="/opt/python/cp312-cp312/bin"
 "${PY312}/pip" install setuptools
-"${PY312}/python" setup.py build_static
+"${PY312}/python" setup.py build
 
 PY313="/opt/python/cp313-cp313/bin"
 "${PY313}/pip" install setuptools
-"${PY313}/python" setup.py build_static
+"${PY313}/python" setup.py build
 
 PY314="/opt/python/cp314-cp314/bin"
 "${PY314}/pip" install setuptools
-"${PY314}/python" setup.py build_static
+"${PY314}/python" setup.py build
 
 # Replace the package name defined in setup.py so we can push this to PyPI
 # without stomping on the source dist.
