@@ -27,7 +27,7 @@
 #include "Python.h"
 
 #include "connection.h"
-#include "sqlcipher/sqlite3.h"
+#include "../vendor/sqlite3.h"
 
 #define PYSQLITE_TOO_MUCH_SQL (-100)
 #define PYSQLITE_SQL_WRONG_TYPE (-101)

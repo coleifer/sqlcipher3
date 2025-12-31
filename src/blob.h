@@ -1,7 +1,7 @@
 #ifndef PYSQLITE_BLOB_H
 #define PYSQLITE_BLOB_H
 #include "Python.h"
-#include "sqlcipher/sqlite3.h"
+#include "../vendor/sqlite3.h"
 #include "connection.h"
 
 typedef struct
