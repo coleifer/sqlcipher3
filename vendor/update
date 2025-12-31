@@ -1,0 +1,35 @@
+#!/bin/bash
+
+if [[ ! -d "sqlcipher" ]]; then
+  git clone https://github.com/sqlcipher/sqlcipher
+fi
+
+export CFLAGS="-DSQLITE_DEFAULT_CACHE_SIZE=-8000 \
+-DSQLITE_DEFAULT_FOREIGN_KEYS=1 \
+-DSQLITE_DEFAULT_MEMSTATUS=0 \
+-DSQLITE_DEFAULT_PAGE_SIZE=4096 \
+-DSQLITE_ENABLE_EXPLAIN_COMMENTS \
+-DSQLITE_ENABLE_FTS3_PARENTHESIS \
+-DSQLITE_ENABLE_FTS3 \
+-DSQLITE_ENABLE_FTS4 \
+-DSQLITE_ENABLE_FTS5 \
+-DSQLITE_ENABLE_JSON1 \
+-DSQLITE_ENABLE_MEMDB \
+-DSQLITE_ENABLE_STAT4 \
+-DSQLITE_ENABLE_UNLOCK_NOTIFY \
+-DSQLITE_ENABLE_UPDATE_DELETE_LIMIT \
+-DSQLITE_LIKE_DOESNT_MATCH_BLOBS \
+-DSQLITE_SOUNDEX \
+-DSQLITE_USE_URI \
+-DSQLITE_TEMP_STORE=3 \
+-DSQLITE_HAS_CODEC=1 \
+-DHAVE_STDINT_H=1 \
+-O2"
+
+cd sqlcipher/
+./configure --disable-tcl --fts3 --fts4 --fts5 --update-limit --enable-load-extension --enable-threadsafe --prefix="$PREFIX"
+make sqlite3.c sqlite3.h
+cd ../
+cp sqlcipher/sqlite3.[ch] .
+
+echo "Successfully updated amalgamation"

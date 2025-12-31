@@ -53,12 +53,9 @@ class SystemLibSqliteBuilder(build_ext):
 class AmalgationLibSqliteBuilder(build_ext):
     description = "Builds a C extension using a sqlcipher amalgamation"
 
-    amalgamation_root = "."
+    amalgamation_root = "vendor"
     amalgamation_header = os.path.join(amalgamation_root, 'sqlite3.h')
     amalgamation_source = os.path.join(amalgamation_root, 'sqlite3.c')
-
-    header_dir = os.path.join(amalgamation_root, 'sqlcipher')
-    header_file = os.path.join(header_dir, 'sqlite3.h')
 
     amalgamation_message = ('Sqlcipher amalgamation not found. Please download'
                             ' or build the amalgamation and make sure the '
@@ -71,11 +68,6 @@ class AmalgationLibSqliteBuilder(build_ext):
         if not header_exists or not source_exists:
             raise RuntimeError(self.amalgamation_message)
 
-        if not os.path.exists(self.header_dir):
-            os.mkdir(self.header_dir)
-        if not os.path.exists(self.header_file):
-            shutil.copy(self.amalgamation_header, self.header_file)
-
     def build_extension(self, ext):
         log.info(self.description)
 
@@ -84,6 +76,7 @@ class AmalgationLibSqliteBuilder(build_ext):
 
         # Feature-ful library.
         features = (
+            'ENABLE_EXPLAIN_COMMENTS'
             'ENABLE_FTS3',
             'ENABLE_FTS3_PARENTHESIS',
             'ENABLE_FTS4',
@@ -108,6 +101,8 @@ class AmalgationLibSqliteBuilder(build_ext):
 
         # Additional nice-to-have.
         ext.define_macros.extend((
+            ('SQLITE_EXTRA_INIT', 'sqlcipher_extra_init'),
+            ('SQLITE_EXTRA_SHUTDOWN', 'sqlcipher_extra_shutdown'),
             ('SQLITE_DEFAULT_PAGE_SIZE', '4096'),
             ('SQLITE_DEFAULT_CACHE_SIZE', '-8000')))  # 8MB.
 
@@ -115,8 +110,9 @@ class AmalgationLibSqliteBuilder(build_ext):
         ext.sources.append(os.path.join(self.amalgamation_root, "sqlite3.c"))
 
         if sys.platform != "win32":
-            # Include math library, required for fts5, and crypto.
-            ext.extra_link_args.extend(["-lm", "-lcrypto"])
+            # Needed since we are not using configure.
+            ext.define_macros.append(('HAVE_STDINT_H', '1'))
+            ext.extra_link_args.extend(['-lcrypto'])
         else:
             # Try to locate openssl.
             openssl_conf = os.environ.get('OPENSSL_CONF')
@@ -167,7 +163,6 @@ def get_setup_args():
         classifiers=[
             "Development Status :: 4 - Beta",
             "Intended Audience :: Developers",
-            'License :: OSI Approved :: MIT License',
             "Operating System :: MacOS :: MacOS X",
             "Operating System :: Microsoft :: Windows",
             "Operating System :: POSIX",
@@ -176,8 +171,8 @@ def get_setup_args():
             "Topic :: Database :: Database Engines/Servers",
             "Topic :: Software Development :: Libraries :: Python Modules"],
         cmdclass={
-            "build_static": AmalgationLibSqliteBuilder,
-            "build_ext": SystemLibSqliteBuilder
+            "build_ext": AmalgationLibSqliteBuilder,
+            "build_system": SystemLibSqliteBuilder
         }
     )
 
