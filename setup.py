@@ -15,7 +15,7 @@ from setuptools import setup, Extension
 
 
 PACKAGE_NAME = 'sqlcipher3'
-VERSION = '0.6.1'
+VERSION = '0.6.2'
 
 CONAN_ARCHS = {
     'x86_64': ['amd64', 'x86_64', 'x64'],
