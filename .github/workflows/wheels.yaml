@@ -1,0 +1,159 @@
+name: Build wheels
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+      - "[0-9]+.[0-9]+.[0-9]+-**"
+
+jobs:
+  sdist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: |
+          python -m pip install -U pip
+          pip install setuptools
+
+      - name: Build sdist
+        run: |
+          python setup.py sdist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist/sqlcipher3*.tar.gz
+
+  wheels:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            cibw_archs: x86_64
+            cibw_build: "cp*-manylinux_*"
+            cibw_skip: ""
+            compile_target: x86_64
+            out: x86_64-manylinux
+          - os: ubuntu-latest
+            cibw_archs: x86_64
+            cibw_build: "cp*-musllinux_*"
+            cibw_skip: ""
+            compile_target: x86_64
+            out: x86_64-musllinux
+          - os: ubuntu-24.04-arm
+            cibw_archs: aarch64
+            cibw_build: "cp*-manylinux_*"
+            cibw_skip: ""
+            compile_target: armv8
+            out: armv8-manylinux
+          - os: ubuntu-24.04-arm
+            cibw_archs: aarch64
+            cibw_build: "cp*-musllinux_*"
+            cibw_skip: ""
+            compile_target: armv8
+            out: armv8-musllinux
+          - os: ubuntu-latest
+            cibw_archs: i686
+            cibw_build: "cp*-manylinux_*"
+            cibw_skip: ""
+            compile_target: x86
+            out: x86-manylinux
+          - os: windows-latest
+            cibw_archs: AMD64
+            cibw_build: "cp*"
+            cibw_skip: ""
+            compile_target: x86_64
+            out: x86_64-windows
+          - os: windows-latest
+            cibw_archs: x86
+            cibw_build: "cp*"
+            cibw_skip: ""
+            compile_target: x86
+            out: x86-windows
+          - os: windows-latest
+            cibw_archs: ARM64
+            cibw_build: "cp*"
+            cibw_skip: ""
+            compile_target: armv8
+            out: armv8-windows
+          - os: macos-15-intel
+            cibw_archs: x86_64
+            cibw_build: "cp*"
+            cibw_skip: ""
+            compile_target: x86_64
+            out: x86_64-macos
+          - os: macos-latest
+            cibw_archs: arm64
+            cibw_build: "cp*"
+            cibw_skip: ""
+            compile_target: armv8
+            out: armv8-macos
+          - os: macos-latest
+            cibw_archs: universal2
+            cibw_build: "cp*"
+            cibw_skip: ""
+            compile_target: universal2
+            out: universal2-macos
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up QEMU
+        if: runner.os == 'Linux'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: all
+          # This should be temporary
+          # xref https://github.com/docker/setup-qemu-action/issues/188
+          # xref https://github.com/tonistiigi/binfmt/issues/215
+          image: tonistiigi/binfmt:qemu-v8.1.5
+
+      - name: Build wheels for ${{ matrix.os }} ${{ matrix.cibw_archs }} ${{ matrix.cibw_build }}
+        uses: pypa/cibuildwheel@v3.3.0
+        env:
+          CIBW_BUILD_FRONTEND: build
+          CIBW_BUILD: ${{ matrix.cibw_build }}
+          CIBW_SKIP: ${{ matrix.cibw_skip }}
+          CIBW_ARCHS: ${{ matrix.cibw_archs }}
+          CIBW_ENVIRONMENT: SQLCIPHER3_COMPILE_TARGET=${{ matrix.compile_target }}
+          CIBW_BEFORE_ALL_LINUX: command -v yum >/dev/null && yum -y install perl-core || command -v apk >/dev/null && apk add perl || true
+          CIBW_TEST_COMMAND: >
+            mv {project}/sqlcipher3 {project}/sqlcipher3_ &&
+            python {project}/tests/ &&
+            mv {project}/sqlcipher3_ {project}/sqlcipher3
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.out }}
+          path: wheelhouse/*.whl
+
+  publish:
+    needs: [sdist, wheels]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: sdist
+          path: dist
+          merge-multiple: true
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}

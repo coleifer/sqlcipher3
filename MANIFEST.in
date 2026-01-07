@@ -6,5 +6,6 @@ include src/*.h
 include src/*.c
 include vendor/*.h
 include vendor/*.c
+include conanfile.py
 
 global-exclude *~ *.pyc

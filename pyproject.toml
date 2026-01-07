@@ -1,0 +1,39 @@
+[build-system]
+requires = [
+    "setuptools>=69",
+    "conan>=2.0",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sqlcipher3"
+version = "0.6.1"
+description = "DB-API 2.0 interface for SQLCipher 4.x"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    { name = "Charles Leifer", email = "coleifer@gmail.com" },
+    { name = "laggykiller", email = "chaudominic2@gmail.com" }
+]
+license = "MIT"
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: C",
+    "Topic :: Database",
+    "Topic :: Database :: Database Engines/Servers",
+    "Topic :: Database :: Front-Ends",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.urls]
+Repository = "https://github.com/coleifer/sqlcipher3"
+
+[tool.setuptools]
+package-dir = { "sqlcipher3" = "sqlcipher3" }
+
+[tool.cibuildwheel]
+build = "cp39-* cp310-* cp311-* cp312-* cp313-* cp314-*"
+skip = "pp* *-musllinux_i686"

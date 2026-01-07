@@ -1,181 +1,189 @@
 # -*- coding: ISO-8859-1 -*-
 # setup.py: the distutils script
 #
+
+# MANY THANKS to @laggykiller for implementing all of this so we can enjoy
+# wheels (within wheels, within wheels).
+import glob
+import json
 import os
-import setuptools
-import shutil
+import platform
+import subprocess
 import sys
 
-from distutils import log
-from distutils.command.build_ext import build_ext
-from setuptools import Extension
+from setuptools import setup, Extension
 
-# If you need to change anything, it should be enough to change setup.cfg.
 
 PACKAGE_NAME = 'sqlcipher3'
-VERSION = '0.6.0'
+VERSION = '0.6.1'
+
+CONAN_ARCHS = {
+    'x86_64': ['amd64', 'x86_64', 'x64'],
+    'x86': ['i386', 'i686', 'x86'],
+    'armv8': ['arm64', 'aarch64', 'aarch64_be', 'armv8b', 'armv8l'],
+}
 
 # define sqlite sources
-sources = [os.path.join('src', source)
-           for source in ["module.c", "connection.c", "cursor.c", "cache.c",
-                          "microprotocols.c", "prepare_protocol.c",
-                          "statement.c", "util.c", "row.c", "blob.c"]]
+sources = glob.glob('src/*.c') + ['vendor/sqlite3.c']
+library_dirs = []
+include_dirs = ['./src']
 
-# define packages
-packages = [PACKAGE_NAME]
-EXTENSION_MODULE_NAME = "._sqlite3"
+def get_native_arch():
+    arch = platform.machine().lower()
+    for k, v in CONAN_ARCHS.items():
+        if arch in v:
+            return k
+    return arch
 
-# Work around clang raising hard error for unused arguments
-if sys.platform == "darwin":
-    os.environ['CFLAGS'] = os.environ.get('CFLAGS', '') + " -Qunused-arguments -I/opt/homebrew/include"
-    os.environ['LDFLAGS'] = os.environ.get('LDFLAGS', '') + " -L/opt/homebrew/lib"
-    log.info("CFLAGS: " + os.environ['CFLAGS'])
-    log.info("LDFLAGS: " + os.environ['LDFLAGS'])
+def get_arch():
+    arch_env = os.getenv('SQLCIPHER3_COMPILE_TARGET')
+    if isinstance(arch_env, str):
+        return arch_env
+
+    return get_native_arch()
+
+def install_openssl(arch):
+    settings: list[str] = []
+    options: list[str] = []
+
+    if platform.system() == 'Windows':
+        settings.append('os=Windows')
+    elif platform.system() == 'Darwin':
+        settings.append('os=Macos')
+        if arch == 'x86_64':
+            settings.append('os.version=10.9')
+        else:
+            settings.append('os.version=11.0')
+        settings.append('compiler=apple-clang')
+        settings.append('compiler.libcxx=libc++')
+    elif platform.system() == 'Linux':
+        settings.append('os=Linux')
+
+    settings.append('arch=%s' % arch)
+    options.append('openssl/*:no_zlib=True')
+
+    build = ['missing']
+
+    # Need to compile openssl if musllinux.
+    if os.path.isdir('/lib') and any(e.startswith('libc.musl') for e in os.listdir('/lib')):
+        build.append('openssl*')
+
+    subprocess.run(['conan', 'profile', 'detect', '-f'])
+    # Latest openssl need center2.conan.io instead of center.conan.io
+    subprocess.run(['conan', 'remote', 'update', 'conancenter', '--url=https://center2.conan.io'])
+
+    conan_output = os.path.join('conan_output', arch)
+    result = subprocess.run([
+        'conan', 'install',
+        *[x for s in settings for x in ('-s', s)],
+        *[x for b in build for x in ('-b', b)],
+        *[x for o in options for x in ('-o', o)],
+        '-of', conan_output, '--deployer=direct_deploy', '--format=json', '.'
+        ], stdout=subprocess.PIPE).stdout.decode()
+
+    conan_info = json.loads(result)
+
+    return conan_info
 
 
-def quote_argument(arg):
-    q = '\\"' if sys.platform == 'win32' and sys.version_info < (3, 8) else '"'
+def add_deps(conan_info):
+    library_dirs = []
+    include_dirs = []
+    for dep in conan_info['graph']['nodes'].values():
+        package_folder = dep.get('package_folder')
+        if package_folder is None:
+            continue
+
+        library_dirs.append(os.path.join(package_folder, 'lib'))
+        include_dirs.append(os.path.join(package_folder, 'include'))
+
+    return library_dirs, include_dirs
+
+def quote_argument(arg: str) -> str:
+    is_cibuildwheel = os.environ.get('CIBUILDWHEEL', '0') == '1'
+
+    if sys.platform == 'win32' and (
+        (is_cibuildwheel and sys.version_info < (3, 7))
+        or (not is_cibuildwheel and sys.version_info < (3, 9))
+    ):
+        q = '\\"'
+    else:
+        q = '"'
+
     return q + arg + q
 
-define_macros = [('MODULE_NAME', quote_argument(PACKAGE_NAME + '.dbapi2'))]
-
-
-class SystemLibSqliteBuilder(build_ext):
-    description = "Builds a C extension linking against libsqlcipher library"
-
-    def build_extension(self, ext):
-        log.info(self.description)
-        ext.libraries.append('sqlcipher')
-        ext.define_macros.append(('SQLITE_HAS_CODEC', '1'))
-        build_ext.build_extension(self, ext)
-
-
-class AmalgationLibSqliteBuilder(build_ext):
-    description = "Builds a C extension using a sqlcipher amalgamation"
-
-    amalgamation_root = "vendor"
-    amalgamation_header = os.path.join(amalgamation_root, 'sqlite3.h')
-    amalgamation_source = os.path.join(amalgamation_root, 'sqlite3.c')
-
-    amalgamation_message = ('Sqlcipher amalgamation not found. Please download'
-                            ' or build the amalgamation and make sure the '
-                            'following files are present in the sqlcipher3 '
-                            'folder: sqlite3.h, sqlite3.c')
-
-    def check_amalgamation(self):
-        header_exists = os.path.exists(self.amalgamation_header)
-        source_exists = os.path.exists(self.amalgamation_source)
-        if not header_exists or not source_exists:
-            raise RuntimeError(self.amalgamation_message)
-
-    def build_extension(self, ext):
-        log.info(self.description)
-
-        # it is responsibility of user to provide amalgamation
-        self.check_amalgamation()
-
-        # Feature-ful library.
-        features = (
-            'ENABLE_EXPLAIN_COMMENTS'
-            'ENABLE_FTS3',
-            'ENABLE_FTS3_PARENTHESIS',
-            'ENABLE_FTS4',
-            'ENABLE_FTS5',
-            'ENABLE_JSON1',
-            'ENABLE_LOAD_EXTENSION',
-            'ENABLE_RTREE',
-            'ENABLE_STAT4',
-            'ENABLE_UPDATE_DELETE_LIMIT',
-            'HAS_CODEC',  # Required for SQLCipher.
-            'SOUNDEX',
-            'USE_URI',
-        )
-        for feature in features:
-            ext.define_macros.append(('SQLITE_%s' % feature, '1'))
-
+if __name__ == '__main__':
+    define_macros = [
+        ('MODULE_NAME', quote_argument('sqlcipher3.dbapi2')),
+        ('SQLITE_ENABLE_FTS3', '1'),
+        ('SQLITE_ENABLE_FTS3_PARENTHESIS', '1'),
+        ('SQLITE_ENABLE_FTS4', '1'),
+        ('SQLITE_ENABLE_FTS5', '1'),
+        ('SQLITE_ENABLE_JSON1', '1'),
+        ('SQLITE_ENABLE_LOAD_EXTENSION', '1'),
+        ('SQLITE_ENABLE_RTREE', '1'),
+        ('SQLITE_ENABLE_STAT4', '1'),
+        ('SQLITE_ENABLE_UPDATE_DELETE_LIMIT', '1'),
+        ('SQLITE_SOUNDEX', '1'),
+        ('SQLITE_USE_URI', '1'),
         # Required for SQLCipher.
-        ext.define_macros.append(("SQLITE_TEMP_STORE", "2"))
-
+        ('SQLITE_HAS_CODEC', '1'),
+        ('SQLITE_TEMP_STORE', '2'),
+        ('SQLITE_THREADSAFE', '1'),
+        ('SQLITE_EXTRA_INIT', 'sqlcipher_extra_init'),
+        ('SQLITE_EXTRA_SHUTDOWN', 'sqlcipher_extra_shutdown'),
+        ('HAVE_STDINT_H', '1'),
         # Increase the maximum number of "host parameters".
-        ext.define_macros.append(("SQLITE_MAX_VARIABLE_NUMBER", "250000"))
-
+        ('SQLITE_MAX_VARIABLE_NUMBER', '250000'),
         # Additional nice-to-have.
-        ext.define_macros.extend((
-            ('SQLITE_EXTRA_INIT', 'sqlcipher_extra_init'),
-            ('SQLITE_EXTRA_SHUTDOWN', 'sqlcipher_extra_shutdown'),
-            ('SQLITE_DEFAULT_PAGE_SIZE', '4096'),
-            ('SQLITE_DEFAULT_CACHE_SIZE', '-8000')))  # 8MB.
+        ('SQLITE_DEFAULT_PAGE_SIZE', '4096'),
+        ('SQLITE_DEFAULT_CACHE_SIZE', '-8000'),
+        ('inline', '__inline'),
+    ]
 
-        ext.include_dirs.append(self.amalgamation_root)
-        ext.sources.append(os.path.join(self.amalgamation_root, "sqlite3.c"))
-
-        if sys.platform != "win32":
-            # Needed since we are not using configure.
-            ext.define_macros.append(('HAVE_STDINT_H', '1'))
-            ext.extra_link_args.extend(['-lcrypto'])
+    try:
+        import conan
+    except ImportError:
+        library_dirs = include_dirs = []
+    else:
+        # Configure the compiler
+        arch = get_arch()
+        if arch == "universal2":
+            # https://docs.conan.io/2/reference/tools/cmake/cmaketoolchain.html#conan-tools-cmaketoolchain-universal-binaries
+            conan_info = install_openssl("armv8|x86_64")
         else:
-            # Try to locate openssl.
-            openssl_conf = os.environ.get('OPENSSL_CONF')
-            if not openssl_conf:
-                error_message = 'Fatal error: OpenSSL could not be detected!'
-                raise RuntimeError(error_message)
+            conan_info = install_openssl(arch)
+        library_dirs, include_dirs = add_deps(conan_info)
 
-            openssl = os.path.dirname(os.path.dirname(openssl_conf))
-            openssl_lib_path = os.path.join(openssl, "lib")
+    extra_compile_args = ['-Qunused-arguments'] if sys.platform == 'darwin' else []
 
-            # Configure the compiler
-            ext.include_dirs.append(os.path.join(openssl, "include"))
-            ext.define_macros.append(("inline", "__inline"))
+    # Configure the linker
+    extra_link_args = []
+    if sys.platform == 'win32':
+        # https://github.com/openssl/openssl/blob/master/NOTES-WINDOWS.md#linking-native-applications
+        extra_link_args.append('WS2_32.LIB')
+        extra_link_args.append('GDI32.LIB')
+        extra_link_args.append('ADVAPI32.LIB')
+        extra_link_args.append('CRYPT32.LIB')
+        extra_link_args.append('USER32.LIB')
+        extra_link_args.append('libcrypto.lib')
+    else:
+        # Include math library, required for fts5, and crypto.
+        extra_link_args.extend(['-lm', '-lcrypto'])
 
-            # Configure the linker
-            openssl_libname = os.environ.get('OPENSSL_LIBNAME') or 'libeay32.lib'
-            ext.extra_link_args.append(openssl_libname)
-            ext.extra_link_args.append('/LIBPATH:' + openssl_lib_path)
+    module = Extension(
+        name='sqlcipher3._sqlite3',
+        sources=sources,
+        define_macros=define_macros,
+        library_dirs=library_dirs,
+        include_dirs=include_dirs,
+        extra_compile_args=extra_compile_args,
+        extra_link_args=extra_link_args,
+        language='c')
 
-        build_ext.build_extension(self, ext)
-
-    def __setattr__(self, k, v):
-        # Make sure we don't link against the SQLite
-        # library, no matter what setup.cfg says
-        if k == "libraries":
-            v = None
-        self.__dict__[k] = v
-
-
-def get_setup_args():
-    return dict(
+    setup(
         name=PACKAGE_NAME,
         version=VERSION,
-        description="DB-API 2.0 interface for SQLCipher 3.x",
-        long_description='',
-        author="Charles Leifer",
-        author_email="coleifer@gmail.com",
-        license="MIT License",
-        platforms="ALL",
-        url="https://github.com/coleifer/sqlcipher3",
-        package_dir={PACKAGE_NAME: "sqlcipher3"},
-        packages=packages,
-        ext_modules=[Extension(
-            name=PACKAGE_NAME + EXTENSION_MODULE_NAME,
-            sources=sources,
-            define_macros=define_macros)
-        ],
-        classifiers=[
-            "Development Status :: 4 - Beta",
-            "Intended Audience :: Developers",
-            "Operating System :: MacOS :: MacOS X",
-            "Operating System :: Microsoft :: Windows",
-            "Operating System :: POSIX",
-            "Programming Language :: C",
-            "Programming Language :: Python",
-            "Topic :: Database :: Database Engines/Servers",
-            "Topic :: Software Development :: Libraries :: Python Modules"],
-        cmdclass={
-            "build_ext": AmalgationLibSqliteBuilder,
-            "build_system": SystemLibSqliteBuilder
-        }
-    )
-
-
-if __name__ == "__main__":
-    setuptools.setup(**get_setup_args())
+        package_dir={PACKAGE_NAME: PACKAGE_NAME},
+        packages=[PACKAGE_NAME],
+        ext_modules=[module])
