@@ -14,39 +14,40 @@ Additional features:
 * Simplified detection of DML statements via `sqlite3_stmt_readonly`.
 * Sqlite native backup API (also present in standard library 3.7 and newer).
 
-A completely self-contained binary package (wheel) is available for versions
-0.4.0 and newer as `sqlcipher3-binary`. This package contains the latest
-release of sqlcipher compiled with numerous extensions, and requires no
-external dependencies.
+A completely self-contained binary package (wheel) is available starting with
+version 0.6.2. This package contains the latest release of SQLCipher compiled
+with numerous extensions, and requires no external dependencies.
 
-Building SQLCipher
-------------------
+If you prefer to build yourself, a source distribution is available on PyPI.
+Note that since SQLCipher 4.7.0 the build system for SQLCipher has changed
+substantially and it no longer provides a `libsqlcipher` but is intended to
+overwrite the system libsqlite3.
 
-To build `sqlcipher3` with SQLCipher embedded using the vendored sources:
+sqlcipher3 with statically-linked sqlcipher
+-------------------------------------------
+
+Install a wheel using `pip`:
 
 ```
+$ pip install sqlcipher3
+```
+
+Because SQLCipher 4.7.0 and newer no longer provide a system libsqlcipher,
+there is no great way to link against a system library. The best route if you
+wish to use a different version of SQLCipher than the one bundled is to
+check-out the source code and replace the vendored sources with your own
+desired SQLCipher amalgamation.
+
+```
+# Copy your specific sqlcipher amalgamations into the vendor/ directory at the
+# root of the sqlcipher3 checkout:
+$ cp sqlite3.[ch] vendor/
+
+# Build your library.
+$ pip install .
+
+# Or alternately,
 $ python setup.py build
-```
-
-Building with System SQLCipher
-------------------------------
-
-To build `sqlcipher3` using a system-installed `libsqlcipher` (versions of
-SQLCipher prior to 4.7.x):
-
-```
-$ python setup.py build_system
-```
-
-Using the binary package
-------------------------
-
-A binary package (wheel) is available for linux with a completely
-self-contained  `sqlcipher3`, statically-linked against the most recent release
-of sqlcipher.
-
-```
-$ pip install sqlcipher3-binary
 ```
 
 >Nor aught availed him now to have built in heaven high towers; nor did he
