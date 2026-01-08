@@ -16,7 +16,6 @@ authors = [
     { name = "Charles Leifer", email = "coleifer@gmail.com" },
     { name = "laggykiller", email = "chaudominic2@gmail.com" }
 ]
-license = "MIT"
 classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
