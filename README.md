@@ -23,6 +23,31 @@ Note that since SQLCipher 4.7.0 the build system for SQLCipher has changed
 substantially and it no longer provides a `libsqlcipher` but is intended to
 overwrite the system libsqlite3.
 
+Differences from the standard library sqlite3 module
+-----------------------------------------------------
+
+sqlcipher3 mirrors the `sqlite3` API, but the two modules have separate type
+objects. Code migrated from `sqlite3` by changing only the import keeps
+referring to the standard library's types, and those references quietly stop
+working:
+
+* The exceptions are not shared. `sqlcipher3.IntegrityError` is not
+  `sqlite3.IntegrityError`, nor a subclass of it, and the same holds for every
+  DB-API exception up to and including the base `Error`. A leftover
+  `except sqlite3.IntegrityError:` -- or even `except sqlite3.Error:` -- no
+  longer catches anything, so a handled duplicate-key error becomes an
+  unhandled exception. This is permitted by PEP 249, since each module defines
+  its own exceptions, but it is easy to miss: nothing fails at import time, and
+  tests that never provoke a database error stay green.
+* `sqlite3.Row` cannot be used as a `row_factory`. It requires a
+  `sqlite3.Cursor` and raises `TypeError: Row() argument 1 must be
+  sqlite3.Cursor, not sqlcipher3.dbapi2.Cursor`. Use `sqlcipher3.Row`, which
+  behaves identically.
+
+The simplest way to avoid both is to not import `sqlite3` alongside
+`sqlcipher3`: have one module in your application re-export the driver's
+exception types and `Row`, and import them from there.
+
 sqlcipher3 with statically-linked sqlcipher
 -------------------------------------------
 
