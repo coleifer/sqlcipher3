@@ -119,13 +119,14 @@ jobs:
           image: tonistiigi/binfmt:qemu-v8.1.5
 
       - name: Build wheels for ${{ matrix.os }} ${{ matrix.cibw_archs }} ${{ matrix.cibw_build }}
-        uses: pypa/cibuildwheel@v3.3.0
+        uses: pypa/cibuildwheel@v4.3.5
         env:
           CIBW_BUILD_FRONTEND: build
           CIBW_BUILD: ${{ matrix.cibw_build }}
           CIBW_SKIP: ${{ matrix.cibw_skip }}
           CIBW_ARCHS: ${{ matrix.cibw_archs }}
           CIBW_ENVIRONMENT: SQLCIPHER3_COMPILE_TARGET=${{ matrix.compile_target }}
+          CIBW_CONTAINER_ENGINE: "docker; create_args: --security-opt seccomp=unconfined"
           CIBW_BEFORE_ALL_LINUX: command -v yum >/dev/null && yum -y install perl-core || command -v apk >/dev/null && apk add perl || true
           CIBW_TEST_COMMAND: >
             mv {project}/sqlcipher3 {project}/sqlcipher3_ &&
