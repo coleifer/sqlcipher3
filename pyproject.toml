@@ -34,5 +34,5 @@ Repository = "https://github.com/coleifer/sqlcipher3"
 package-dir = { "sqlcipher3" = "sqlcipher3" }
 
 [tool.cibuildwheel]
-build = "cp39-* cp310-* cp311-* cp312-* cp313-* cp314-*"
+build = "cp39-* cp310-* cp311-* cp312-* cp313-* cp314-* cp315-*"
 skip = "pp* *-musllinux_i686"
