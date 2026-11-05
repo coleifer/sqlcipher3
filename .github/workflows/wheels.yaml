@@ -24,7 +24,7 @@ jobs:
         run: |
           python setup.py sdist
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sdist
           path: dist/sqlcipher3*.tar.gz
@@ -110,7 +110,7 @@ jobs:
 
       - name: Set up QEMU
         if: runner.os == 'Linux'
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
         with:
           platforms: all
           # This should be temporary
@@ -133,7 +133,7 @@ jobs:
             python {project}/tests/ &&
             mv {project}/sqlcipher3_ {project}/sqlcipher3
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: wheels-${{ matrix.out }}
           path: wheelhouse/*.whl
@@ -142,13 +142,13 @@ jobs:
     needs: [sdist, wheels]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: wheels-*
           path: dist
           merge-multiple: true
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: sdist
           path: dist
